@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Lock, Mail, AlertCircle, Beaker, Lightbulb, FileText, Rocket } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -106,6 +107,16 @@ const Login = () => {
               </button>
             </div>
           </form>
+
+          <div className="mt-6 text-center text-sm text-gray-600">
+          Don’t have an account?{' '}
+          <Link
+            to="/signup"
+            className="font-medium text-blue-700 hover:underline"
+            > 
+            Sign up here
+          </Link>
+        </div>
 
           <div className="mt-8">
             <div className="relative">

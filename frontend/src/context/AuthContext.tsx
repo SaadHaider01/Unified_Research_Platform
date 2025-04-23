@@ -11,14 +11,15 @@ interface User {
 }
 
 interface AuthContextType {
-  user: User | null;
-  isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
-  loading: boolean;
-  updateUser: (updatedUser: User) => void;
-}
-
+   user: User | null;
+   isAuthenticated: boolean;
+   login: (email: string, password: string) => Promise<void>;
+   logout: () => void;
+   loading: boolean;
+   updateUser: (updatedUser: User) => void;
+   signup: (newUser: Omit<User, 'id'> & { password: string }) => Promise<void>; // 👈 Added
+  }
+  
 // Create context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -104,6 +105,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  //signup function
+  const signup = async (newUser: Omit<User, 'id'> & { password: string }) => {
+     setLoading(true);
+     await new Promise(resolve => setTimeout(resolve, 800)); // simulate delay
+    
+     const existingUsers = JSON.parse(localStorage.getItem('mockUsers') || '[]') as User[];
+    
+     if (existingUsers.find(u => u.email === newUser.email)) {
+     setLoading(false);
+     throw new Error('User already exists');
+     }
+    
+    const createdUser: User = {
+    ...newUser,
+    id: Date.now().toString(), // simple unique id for demo
+    };
+    
+    const updatedUsers = [...existingUsers, createdUser];
+    localStorage.setItem('mockUsers', JSON.stringify(updatedUsers));
+    localStorage.setItem('user', JSON.stringify(createdUser));
+    setUser(createdUser);
+    setLoading(false);
+    };
+    
+
   // Logout function
   const logout = () => {
     localStorage.removeItem('user');
@@ -128,6 +154,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     login,
     logout,
     updateUser,
+    signup,
     loading
   };
 

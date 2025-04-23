@@ -13,6 +13,7 @@ import Login from './pages/auth/Login';
 import AuthProvider from './context/AuthContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import { useEffect } from 'react';
+import Signup from './pages/auth/SignUp';
 
 function App() {
   // Set document title
@@ -25,6 +26,7 @@ function App() {
       <Router>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
           <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
             <Route path="/" element={<Dashboard />} />
             <Route path="/research/projects" element={<ResearchProjects />} />
