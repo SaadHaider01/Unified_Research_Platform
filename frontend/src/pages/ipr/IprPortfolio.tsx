@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { FileText, Filter, Plus, ArrowUpDown, MoreHorizontal, Search, ArrowUpRight, ChevronDown, Globe, BookOpen, Shield } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { FileText, Filter, Plus, ArrowUpDown, MoreHorizontal, Search, ChevronDown, Globe, BookOpen, Shield } from 'lucide-react';
+//import { Link } from 'react-router-dom';
 
 const mockPatents = [
   {
@@ -80,10 +80,10 @@ const formatDate = (dateString: string) => {
   return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(date);
 };
 
-const StatusBadge = ({ status, type }: { status: string; type: string }) => {
+const StatusBadge = ({ status }: { status: string }) => {
   let bgColor;
   let textColor;
-  let label = status.charAt(0).toUpperCase() + status.slice(1);
+  const label = status.charAt(0).toUpperCase() + status.slice(1);
 
   switch (status) {
     case 'pending':
@@ -122,7 +122,7 @@ const TypeBadge = ({ type }: { type: string }) => {
   let bgColor;
   let textColor;
   let icon;
-  let label = type.charAt(0).toUpperCase() + type.slice(1);
+  const label = type.charAt(0).toUpperCase() + type.slice(1);
 
   switch (type) {
     case 'patent':
@@ -191,10 +191,10 @@ const IprPortfolio = () => {
   // Sort items if sort configuration exists
   const sortedItems = sortConfig
     ? [...filteredItems].sort((a, b) => {
-        if (a[sortConfig.key as keyof typeof a] < b[sortConfig.key as keyof typeof b]) {
+        if ((a[sortConfig.key as keyof typeof a] ?? '') < (b[sortConfig.key as keyof typeof b] ?? '')) {
           return sortConfig.direction === 'asc' ? -1 : 1;
         }
-        if (a[sortConfig.key as keyof typeof a] > b[sortConfig.key as keyof typeof b]) {
+        if ((a[sortConfig.key as keyof typeof a] ?? '') > (b[sortConfig.key as keyof typeof b] ?? '')) {
           return sortConfig.direction === 'asc' ? 1 : -1;
         }
         return 0;
@@ -469,12 +469,12 @@ const IprPortfolio = () => {
                     <div className="text-sm font-medium text-gray-900">{item.title}</div>
                     {'inventors' in item && (
                       <div className="text-xs text-gray-500 mt-1">
-                        Inventors: {item.inventors.join(', ')}
+                        Inventors: {item.inventors?.join(', ')}
                       </div>
                     )}
                     {'authors' in item && (
                       <div className="text-xs text-gray-500 mt-1">
-                        Authors: {item.authors.join(', ')}
+                        Authors: {(item.authors ?? []).join(', ')}
                       </div>
                     )}
                     {'licensee' in item && (
@@ -487,25 +487,25 @@ const IprPortfolio = () => {
                     <TypeBadge type={item.type} />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <StatusBadge status={item.status} type={item.type} />
+                    <StatusBadge status={item.status} />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {formatDate(item.filingDate)}
+                    {item.filingDate ? formatDate(item.filingDate) : 'N/A'}
                     {item.status === 'granted' && 'grantDate' in item && (
                       <div className="text-xs mt-1">
-                        Granted: {formatDate(item.grantDate)}
+                        Granted: {formatDate(item.grantDate ?? '')}
                       </div>
                     )}
                     {item.status === 'registered' && 'regDate' in item && (
                       <div className="text-xs mt-1">
-                        Registered: {formatDate(item.regDate)}
+                        Registered: {formatDate(item.regDate ?? '')}
                       </div>
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     {'countries' in item && (
                       <div className="flex flex-wrap">
-                        {item.countries.map((code, index) => (
+                        {item.countries?.map((code, index) => (
                           <CountryCode key={index} code={code} />
                         ))}
                       </div>

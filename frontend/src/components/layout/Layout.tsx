@@ -23,7 +23,7 @@ const Layout = () => {
     return () => window.removeEventListener('resize', checkIfMobile);
   }, []);
 
-  // Close sidebar by default on mobile
+  // Close sidebar by default on mobile, but always keep it open on desktop
   useEffect(() => {
     if (isMobile) {
       setIsSidebarOpen(false);
@@ -32,6 +32,16 @@ const Layout = () => {
     }
   }, [isMobile]);
 
+  // Modified toggle function that only works on mobile
+  const toggleSidebar = () => {
+    if (isMobile) {
+      setIsSidebarOpen(!isSidebarOpen);
+    } else {
+      // Always ensure sidebar is open on desktop
+      setIsSidebarOpen(true);
+    }
+  };
+
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
@@ -39,7 +49,7 @@ const Layout = () => {
       
       {/* Main Content */}
       <div className="flex flex-col flex-1 overflow-hidden">
-        <Header toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
+        <Header toggleSidebar={toggleSidebar} />
         
         {/* Main Content Area */}
         <main className="flex-1 overflow-y-auto bg-gray-50 p-4 lg:p-6">
@@ -48,14 +58,6 @@ const Layout = () => {
           </div>
         </main>
       </div>
-      
-      {/* Overlay for mobile */}
-      {isMobile && isSidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-10"
-          onClick={() => setIsSidebarOpen(false)}
-        />
-      )}
     </div>
   );
 };

@@ -6,6 +6,8 @@ interface User {
   email: string;
   role: 'researcher' | 'ipr_officer' | 'innovation_manager' | 'startup_founder' | 'admin';
   avatar?: string;
+  department?: string;
+  bio?: string;
 }
 
 interface AuthContextType {
@@ -14,6 +16,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   loading: boolean;
+  updateUser: (updatedUser: User) => void;
 }
 
 // Create context
@@ -26,35 +29,45 @@ const MOCK_USERS: User[] = [
     name: 'Jane Smith',
     email: 'researcher@example.com',
     role: 'researcher',
-    avatar: 'https://i.pravatar.cc/150?img=1'
+    avatar: 'https://i.pravatar.cc/150?img=1',
+    department: 'Research & Development',
+    bio: 'Experienced researcher with focus on renewable energy technologies.'
   },
   {
     id: '2',
     name: 'Robert Chen',
     email: 'ipr@example.com',
     role: 'ipr_officer',
-    avatar: 'https://i.pravatar.cc/150?img=2'
+    avatar: 'https://i.pravatar.cc/150?img=2',
+    department: 'Intellectual Property',
+    bio: 'Specializing in patent law and intellectual property protection.'
   },
   {
     id: '3',
     name: 'Sara Johnson',
     email: 'innovation@example.com',
     role: 'innovation_manager',
-    avatar: 'https://i.pravatar.cc/150?img=3'
+    avatar: 'https://i.pravatar.cc/150?img=3',
+    department: 'Innovation Management',
+    bio: 'Leading innovation initiatives across multiple research domains.'
   },
   {
     id: '4',
     name: 'David Parker',
     email: 'startup@example.com',
     role: 'startup_founder',
-    avatar: 'https://i.pravatar.cc/150?img=4'
+    avatar: 'https://i.pravatar.cc/150?img=4',
+    department: 'Startup Incubation',
+    bio: 'Serial entrepreneur with experience in technology startups.'
   },
   {
     id: '5',
     name: 'Admin User',
     email: 'admin@example.com',
     role: 'admin',
-    avatar: 'https://i.pravatar.cc/150?img=5'
+    avatar: 'https://i.pravatar.cc/150?img=5',
+    department: 'Administration',
+    bio: 'System administrator responsible for platform management.'
   }
 ];
 
@@ -97,11 +110,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
   };
 
+  // Update user function
+  const updateUser = (updatedUser: User) => {
+    // Update in localStorage
+    localStorage.setItem('user', JSON.stringify(updatedUser));
+    
+    // Update in state
+    setUser(updatedUser);
+    
+    // In a real application, you would also make an API call to update the user in the backend
+    // For this demo, we're just updating the client-side state and localStorage
+  };
+
   const value = {
     user,
     isAuthenticated: !!user,
     login,
     logout,
+    updateUser,
     loading
   };
 

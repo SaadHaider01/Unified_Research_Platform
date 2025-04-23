@@ -2,6 +2,8 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Layout from './components/layout/Layout';
 import Dashboard from './pages/Dashboard';
 import ResearchProjects from './pages/research/ResearchProjects';
+import GrantApplications from './pages/research/GrantsApplication';
+import Publications from './pages/research/Publications';
 import IprPortfolio from './pages/ipr/IprPortfolio';
 import InnovationHub from './pages/innovation/InnovationHub';
 import StartupIncubator from './pages/startup/StartupIncubator';
@@ -25,11 +27,14 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
             <Route path="/" element={<Dashboard />} />
-            <Route path="/research/*" element={<ResearchProjects />} />
+            <Route path="/research/projects" element={<ResearchProjects />} />
+            <Route path="/research/grants" element={<GrantApplications />} />
+            <Route path="/research/publications" element={<Publications />} />
             <Route path="/ipr/*" element={<IprPortfolio />} />
             <Route path="/innovation/*" element={<InnovationHub />} />
             <Route path="/startup/*" element={<StartupIncubator />} />
             <Route path="/users" element={<UserManagement />} />
+            <Route path="/profile" element={<Settings />} />
             <Route path="/settings" element={<Settings />} />
           </Route>
         </Routes>

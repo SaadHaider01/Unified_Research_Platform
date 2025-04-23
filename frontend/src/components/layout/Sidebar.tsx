@@ -101,7 +101,7 @@ const SubNavItem: React.FC<{ to: string; title: string }> = ({ to, title }) => {
   );
 };
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, isMobile }) => {
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, isMobile }: SidebarProps) => {
   const location = useLocation();
   const { user } = useAuth();
   
@@ -128,11 +128,19 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, isMobile }) => {
     }
   }, [location.pathname]);
   
+  // const toggleSection = (section: string) => {
+  //   setExpandedSections(prev => ({
+  //     ...prev,
+  //     [section]: !prev[section]
+  //   }));
+  // };
   const toggleSection = (section: string) => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [section]: !prev[section]
-    }));
+    setExpandedSections({
+      research: section === 'research',
+      ipr: section === 'ipr',
+      innovation: section === 'innovation',
+      startup: section === 'startup'
+    });
   };
 
   return (
@@ -181,7 +189,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, isMobile }) => {
             <SubNavItem to="/research/projects" title="All Projects" />
             <SubNavItem to="/research/grants" title="Grant Applications" />
             <SubNavItem to="/research/publications" title="Publications" />
-            <SubNavItem to="/research/teams" title="Research Teams" />
+
           </NavItem>
           
           <NavItem 
