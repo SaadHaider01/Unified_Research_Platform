@@ -179,11 +179,7 @@ const Dashboard = () => {
             Welcome back, {user?.name}. Here's what's happening today.
           </p>
         </div>
-        <div className="mt-4 md:mt-0 flex space-x-3">
-          <button className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-800 hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-            Create New Project
-          </button>
-        </div>
+        
       </div>
 
       {/* Stats Grid */}
