@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Beaker, Search, Filter, Plus, ArrowUpDown, MoreHorizontal, Download, UploadCloud, Calendar, X, Check } from 'lucide-react';
 
 interface Project {
@@ -246,7 +246,7 @@ const ResearchProjects = () => {
   });
 
   // Save projects to localStorage whenever they change
-  useState(() => {
+  useEffect(() => {
     localStorage.setItem('researchProjects', JSON.stringify(projects));
   }, [projects]);
 
@@ -983,7 +983,5 @@ const ResearchProjects = () => {
     </div>
   );
 };
-
-export default ResearchProjects;
 
 export default ResearchProjects
