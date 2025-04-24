@@ -1,5 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { Beaker, Search, Filter, Plus, ArrowUpDown, MoreHorizontal, Download, UploadCloud, Calendar, X, Check } from 'lucide-react';
+import toast, { Toaster } from 'react-hot-toast';
 
 interface Project {
   id: string;
@@ -219,6 +221,9 @@ const ResearchProjects = () => {
   const [projects, setProjects] = useState<Project[]>(mockProjects);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [selectedDepartment, setSelectedDepartment] = useState('all');
+  const [selectedStatus, setSelectedStatus] = useState('all');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // New project form state
   const [newProject, setNewProject] = useState<Partial<Project>>({
@@ -246,7 +251,7 @@ const ResearchProjects = () => {
   });
 
   // Save projects to localStorage whenever they change
-  useEffect(() => {
+  useState(() => {
     localStorage.setItem('researchProjects', JSON.stringify(projects));
   }, [projects]);
 
@@ -364,12 +369,14 @@ const ResearchProjects = () => {
     });
   };
 
-  // Filter projects based on search term
+  // Filter projects based on all criteria
   const filteredProjects = projects.filter(project =>
-    project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (selectedDepartment === 'all' || project.department === selectedDepartment) &&
+    (selectedStatus === 'all' || project.status === selectedStatus) &&
+    (project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     project.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
     project.lead.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    project.department.toLowerCase().includes(searchTerm.toLowerCase())
+    project.department.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   // Sort projects if sort configuration exists
@@ -412,16 +419,68 @@ const ResearchProjects = () => {
     }
   };
 
-  return (
-    <div className="space-y-6 relative">
-      {/* Success Toast */}
-      {showSuccessToast && (
-        <div className="fixed top-4 right-4 bg-green-50 border border-green-200 text-green-800 rounded-lg p-4 flex items-center shadow-lg z-50">
-          <Check className="h-5 w-5 text-green-500 mr-2" />
-          Project created successfully!
-        </div>
-      )}
+  // Handle file upload
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const content = e.target?.result as string;
+          const importedProjects = JSON.parse(content);
+          
+          // Validate imported data
+          if (Array.isArray(importedProjects) && importedProjects.every(project => 
+            project.id && project.title && project.status && project.department
+          )) {
+            setProjects([...projects, ...importedProjects]);
+            localStorage.setItem('researchProjects', JSON.stringify([...projects, ...importedProjects]));
+            toast.success('Projects imported successfully');
+          } else {
+            toast.error('Invalid project data format');
+          }
+        } catch (error) {
+          toast.error('Failed to import projects');
+        }
+      };
+      reader.readAsText(file);
+    }
+  };
 
+  // Handle file download
+  const handleDownload = () => {
+    const selectedData = selectedProjects.length > 0 
+      ? projects.filter(p => selectedProjects.includes(p.id))
+      : projects;
+
+    const dataStr = JSON.stringify(selectedData, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'research-projects.json';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    toast.success(`${selectedData.length} projects exported successfully`);
+  };
+
+  // Handle department filter
+  const handleDepartmentFilter = (department: string) => {
+    setSelectedDepartment(department);
+  };
+
+  // Handle status filter
+  const handleStatusFilter = (status: string) => {
+    setSelectedStatus(status);
+  };
+
+  return (
+    <div className="space-y-6">
+      <Toaster position="top-right" />
+      
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -445,275 +504,11 @@ const ResearchProjects = () => {
         </div>
       </div>
 
-      {/* New Project Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-gray-900">Create New Research Project</h2>
-              <button 
-                onClick={() => setIsModalOpen(false)}
-                className="text-gray-400 hover:text-gray-500"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            
-            <form onSubmit={handleSubmit} className="px-6 py-4 space-y-6">
-              {/* Basic Information */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label htmlFor="title" className="block text-sm font-medium text-gray-700">
-                    Project Title*
-                  </label>
-                  <input
-                    type="text"
-                    name="title"
-                    id="title"
-                    value={newProject.title}
-                    onChange={handleInputChange}
-                    className={`mt-1 block w-full border ${formErrors.title ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
-                  />
-                  {formErrors.title && (
-                    <p className="mt-1 text-sm text-red-600">{formErrors.title}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label htmlFor="department" className="block text-sm font-medium text-gray-700">
-                    Department*
-                  </label>
-                  <select
-                    name="department"
-                    id="department"
-                    value={newProject.department}
-                    onChange={handleInputChange}
-                    className={`mt-1 block w-full border ${formErrors.department ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
-                  >
-                    <option value="">Select Department</option>
-                    <option value="Engineering">Engineering</option>
-                    <option value="Life Sciences">Life Sciences</option>
-                    <option value="Computer Science">Computer Science</option>
-                    <option value="Medicine">Medicine</option>
-                    <option value="Environmental Science">Environmental Science</option>
-                  </select>
-                  {formErrors.department && (
-                    <p className="mt-1 text-sm text-red-600">{formErrors.department}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label htmlFor="lead" className="block text-sm font-medium text-gray-700">
-                    Lead Researcher*
-                  </label>
-                  <input
-                    type="text"
-                    name="lead"
-                    id="lead"
-                    value={newProject.lead}
-                    onChange={handleInputChange}
-                    className={`mt-1 block w-full border ${formErrors.lead ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
-                  />
-                  {formErrors.lead && (
-                    <p className="mt-1 text-sm text-red-600">{formErrors.lead}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label htmlFor="team" className="block text-sm font-medium text-gray-700">
-                    Team Size
-                  </label>
-                  <input
-                    type="number"
-                    name="team"
-                    id="team"
-                    min="1"
-                    value={newProject.team}
-                    onChange={handleInputChange}
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="startDate" className="block text-sm font-medium text-gray-700">
-                    Start Date*
-                  </label>
-                  <input
-                    type="date"
-                    name="startDate"
-                    id="startDate"
-                    value={newProject.startDate}
-                    onChange={handleInputChange}
-                    className={`mt-1 block w-full border ${formErrors.startDate ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
-                  />
-                  {formErrors.startDate && (
-                    <p className="mt-1 text-sm text-red-600">{formErrors.startDate}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label htmlFor="endDate" className="block text-sm font-medium text-gray-700">
-                    End Date*
-                  </label>
-                  <input
-                    type="date"
-                    name="endDate"
-                    id="endDate"
-                    value={newProject.endDate}
-                    onChange={handleInputChange}
-                    className={`mt-1 block w-full border ${formErrors.endDate ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
-                  />
-                  {formErrors.endDate && (
-                    <p className="mt-1 text-sm text-red-600">{formErrors.endDate}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label htmlFor="budget" className="block text-sm font-medium text-gray-700">
-                    Budget*
-                  </label>
-                  <input
-                    type="text"
-                    name="budget"
-                    id="budget"
-                    value={newProject.budget}
-                    onChange={handleInputChange}
-                    placeholder="e.g., $350,000"
-                    className={`mt-1 block w-full border ${formErrors.budget ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
-                  />
-                  {formErrors.budget && (
-                    <p className="mt-1 text-sm text-red-600">{formErrors.budget}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label htmlFor="funding" className="block text-sm font-medium text-gray-700">
-                    Funding Source*
-                  </label>
-                  <input
-                    type="text"
-                    name="funding"
-                    id="funding"
-                    value={newProject.funding}
-                    onChange={handleInputChange}
-                    className={`mt-1 block w-full border ${formErrors.funding ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
-                  />
-                  {formErrors.funding && (
-                    <p className="mt-1 text-sm text-red-600">{formErrors.funding}</p>
-                  )}
-                </div>
-              </div>
-
-              {/* Methodology */}
-              <div>
-                <label htmlFor="methodology" className="block text-sm font-medium text-gray-700">
-                  Research Methodology*
-                </label>
-                <textarea
-                  name="methodology"
-                  id="methodology"
-                  rows={3}
-                  value={newProject.methodology}
-                  onChange={handleInputChange}
-                  className={`mt-1 block w-full border ${formErrors.methodology ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
-                />
-                {formErrors.methodology && (
-                  <p className="mt-1 text-sm text-red-600">{formErrors.methodology}</p>
-                )}
-              </div>
-
-              {/* Objectives */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Research Objectives*
-                </label>
-                {newProject.objectives?.map((objective, index) => (
-                  <div key={index} className="mt-2 flex gap-2">
-                    <input
-                      type="text"
-                      value={objective}
-                      onChange={(e) => handleArrayInputChange(index, e.target.value, 'objectives')}
-                      className={`block w-full border ${formErrors.objectives ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
-                      placeholder="Enter research objective"
-                    />
-                    {index > 0 && (
-                      <button
-                        type="button"
-                        onClick={() => removeArrayItem(index, 'objectives')}
-                        className="p-2 text-red-600 hover:text-red-800"
-                      >
-                        <X className="h-5 w-5" />
-                      </button>
-                    )}
-                  </div>
-                ))}
-                <button
-                  type="button"
-                  onClick={() => addArrayItem('objectives')}
-                  className="mt-2 text-sm text-blue-600 hover:text-blue-800"
-                >
-                  + Add Objective
-                </button>
-                {formErrors.objectives && (
-                  <p className="mt-1 text-sm text-red-600">{formErrors.objectives}</p>
-                )}
-              </div>
-
-              {/* Deliverables */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Deliverables*
-                </label>
-                {newProject.deliverables?.map((deliverable, index) => (
-                  <div key={index} className="mt-2 flex gap-2">
-                    <input
-                      type="text"
-                      value={deliverable}
-                      onChange={(e) => handleArrayInputChange(index, e.target.value, 'deliverables')}
-                      className={`block w-full border ${formErrors.deliverables ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
-                      placeholder="Enter deliverable"
-                    />
-                    {index > 0 && (
-                      <button
-                        type="button"
-                        onClick={() => removeArrayItem(index, 'deliverables')}
-                        className="p-2 text-red-600 hover:text-red-800"
-                      >
-                        <X className="h-5 w-5" />
-                      </button>
-                    )}
-                  </div>
-                ))}
-                <button
-                  type="button"
-                  onClick={() => addArrayItem('deliverables')}
-                  className="mt-2 text-sm text-blue-600 hover:text-blue-800"
-                >
-                  + Add Deliverable
-                </button>
-                {formErrors.deliverables && (
-                  <p className="mt-1 text-sm text-red-600">{formErrors.deliverables}</p>
-                )}
-              </div>
-
-              {/* Form Actions */}
-              <div className="flex justify-end space-x-3 pt-4 border-t">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-800 hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                >
-                  Create Project
-                </button>
-              </div>
-            </form>
-          </div>
+      {/* Success Toast */}
+      {showSuccessToast && (
+        <div className="fixed top-4 right-4 bg-green-50 border border-green-200 text-green-800 rounded-lg p-4 flex items-center shadow-lg z-50">
+          <Check className="h-5 w-5 text-green-500 mr-2" />
+          Project created successfully!
         </div>
       )}
 
@@ -734,28 +529,51 @@ const ResearchProjects = () => {
           </div>
           
           <div className="flex flex-wrap items-center gap-3">
-            <select className="text-sm border-gray-300 rounded-md shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
-              <option>All Departments</option>
-              <option>Engineering</option>
-              <option>Life Sciences</option>
-              <option>Computer Science</option>
-              <option>Medicine</option>
-              <option>Environmental Science</option>
+            <select 
+              className="text-sm border-gray-300 rounded-md shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+              value={selectedDepartment}
+              onChange={(e) => handleDepartmentFilter(e.target.value)}
+            >
+              <option value="all">All Departments</option>
+              <option value="Engineering">Engineering</option>
+              <option value="Life Sciences">Life Sciences</option>
+              <option value="Computer Science">Computer Science</option>
+              <option value="Medicine">Medicine</option>
+              <option value="Environmental Science">Environmental Science</option>
             </select>
             
-            <select className="text-sm border-gray-300 rounded-md shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
-              <option>All Statuses</option>
-              <option>Active</option>
-              <option>Planning</option>
-              <option>Completed</option>
-              <option>On Hold</option>
+            <select 
+              className="text-sm border-gray-300 rounded-md shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+              value={selectedStatus}
+              onChange={(e) => handleStatusFilter(e.target.value)}
+            >
+              <option value="all">All Statuses</option>
+              <option value="active">Active</option>
+              <option value="planning">Planning</option>
+              <option value="completed">Completed</option>
+              <option value="on-hold">On Hold</option>
             </select>
             
             <div className="flex items-center gap-2">
-              <button className="p-2 border border-gray-300 rounded-md hover:bg-gray-50">
+              <button 
+                onClick={handleDownload}
+                className="p-2 border border-gray-300 rounded-md hover:bg-gray-50"
+                title="Download selected projects"
+              >
                 <Download className="h-4 w-4 text-gray-500" />
               </button>
-              <button className="p-2 border border-gray-300 rounded-md hover:bg-gray-50">
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileUpload}
+                accept=".json"
+                className="hidden"
+              />
+              <button 
+                onClick={() => fileInputRef.current?.click()}
+                className="p-2 border border-gray-300 rounded-md hover:bg-gray-50"
+                title="Upload projects"
+              >
                 <UploadCloud className="h-4 w-4 text-gray-500" />
               </button>
               <button className="p-2 border border-gray-300 rounded-md hover:bg-gray-50">
@@ -877,7 +695,12 @@ const ResearchProjects = () => {
                         <Beaker className="h-4 w-4 text-blue-800" />
                       </div>
                       <div className="ml-3">
-                        <div className="text-sm font-medium text-gray-900">{project.title}</div>
+                        <Link 
+                          to={`/research/projects/${project.id}`} 
+                          className="text-sm font-medium text-gray-900 hover:text-blue-600"
+                        >
+                          {project.title}
+                        </Link>
                         <div className="text-xs text-gray-500">{project.department}</div>
                       </div>
                     </div>
@@ -984,4 +807,4 @@ const ResearchProjects = () => {
   );
 };
 
-export default ResearchProjects
+export default ResearchProjects;

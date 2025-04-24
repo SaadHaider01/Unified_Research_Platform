@@ -14,6 +14,8 @@ import AuthProvider from './context/AuthContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import { useEffect } from 'react';
 import Signup from './pages/auth/SignUp';
+import ProjectDetails from './pages/research/ProjectDetails';
+import GrantDetails from './pages/research/GrantDetails';
 
 function App() {
   // Set document title
@@ -29,8 +31,11 @@ function App() {
           <Route path="/signup" element={<Signup />} />
           <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
             <Route path="/" element={<Dashboard />} />
+            <Route path="/research" element={<ResearchProjects />} />
             <Route path="/research/projects" element={<ResearchProjects />} />
+            <Route path="/research/projects/:id" element={<ProjectDetails />} />
             <Route path="/research/grants" element={<GrantApplications />} />
+            <Route path="/research/grants/:id" element={<GrantDetails />} />
             <Route path="/research/publications" element={<Publications />} />
             <Route path="/ipr/*" element={<IprPortfolio />} />
             <Route path="/innovation/*" element={<InnovationHub />} />
