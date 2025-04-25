@@ -16,6 +16,8 @@ import { useEffect } from 'react';
 import Signup from './pages/auth/SignUp';
 import ProjectDetails from './pages/research/ProjectDetails';
 import GrantDetails from './pages/research/GrantDetails';
+import StartupDetailsPage from './pages/startup/StartupDetails';
+import StartupList from './pages/startup/SartupList';
 
 function App() {
   // Set document title
@@ -40,6 +42,8 @@ function App() {
             <Route path="/ipr/*" element={<IprPortfolio />} />
             <Route path="/innovation/*" element={<InnovationHub />} />
             <Route path="/startup/*" element={<StartupIncubator />} />
+            <Route path="/startup-incubator" element={<StartupList />} />
+            <Route path='/startup/ventures/:id' element={<StartupDetailsPage />} />
             <Route path="/users" element={<UserManagement />} />
             <Route path="/profile" element={<Settings />} />
             <Route path="/settings" element={<Settings />} />

@@ -29,6 +29,9 @@ const ProjectDetails = () => {
   const [project, setProject] = useState<Project | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareEmail, setShareEmail] = useState('');
+  const [shareMessage, setShareMessage] = useState('');
 
   useEffect(() => {
     // Load project from localStorage
@@ -50,6 +53,48 @@ const ProjectDetails = () => {
       localStorage.setItem('researchProjects', JSON.stringify(updatedProjects));
       navigate('/research');
     }
+  };
+
+  const handleShare = (e: React.FormEvent) => {
+    e.preventDefault();
+    // In a real app, this would send the share link to the email
+    alert(`Project details shared with ${shareEmail}`);
+    setShareEmail('');
+    setShareMessage('');
+    setShowShareModal(false);
+  };
+
+  const handleExport = () => {
+    if (!project) return;
+    
+    // Create a formatted project object for export
+    const exportData = {
+      ...project,
+      exportDate: new Date().toISOString(),
+      exportVersion: '1.0'
+    };
+    
+    // Convert the project data to a JSON string
+    const jsonString = JSON.stringify(exportData, null, 2);
+    
+    // Create a blob with the data
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    
+    // Create a URL for the blob
+    const url = URL.createObjectURL(blob);
+    
+    // Create a temporary anchor element to trigger the download
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${project.title.replace(/\s+/g, '-').toLowerCase()}-${project.id}.json`;
+    
+    // Append the anchor to the body, click it, and remove it
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    
+    // Release the blob URL
+    URL.revokeObjectURL(url);
   };
 
   if (!project) {
@@ -79,11 +124,16 @@ const ProjectDetails = () => {
           </div>
         </div>
         <div className="flex items-center space-x-3">
-          <button className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+          <button 
+          className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+          onClick={() => setShowShareModal(true)}>
             <Share2 className="h-4 w-4 mr-2" />
             Share
           </button>
-          <button className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+          <button 
+            onClick={handleExport}
+            className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+          >
             <Download className="h-4 w-4 mr-2" />
             Export
           </button>
@@ -257,6 +307,61 @@ const ProjectDetails = () => {
           </div>
         </div>
       </div>
+
+      {/* Share Modal */}
+      {showShareModal && (
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Share Grant Details</h3>
+            <form onSubmit={handleShare}>
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    id="email"
+                    value={shareEmail}
+                    onChange={(e) => setShareEmail(e.target.value)}
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    placeholder="colleague@example.com"
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="message" className="block text-sm font-medium text-gray-700">
+                    Message (Optional)
+                  </label>
+                  <textarea
+                    id="message"
+                    value={shareMessage}
+                    onChange={(e) => setShareMessage(e.target.value)}
+                    rows={3}
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    placeholder="I thought you might be interested in this grant application..."
+                  />
+                </div>
+              </div>
+              <div className="mt-6 flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setShowShareModal(false)}
+                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+                >
+                  Share
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
